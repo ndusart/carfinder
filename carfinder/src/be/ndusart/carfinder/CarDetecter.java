@@ -31,7 +31,7 @@ public class CarDetecter extends BroadcastReceiver implements ConnectionCallback
 		
 		BluetoothDevice device = (BluetoothDevice)intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 		
-		if( device.getAddress().equals(car) ) {
+		if( device != null && device.getAddress().equals(car) ) {
 			Toast.makeText(context, "Going out of car, storing location...", Toast.LENGTH_LONG).show();
 			MainActivity.removeLastStreet(context);
 			updatePosition(context);
