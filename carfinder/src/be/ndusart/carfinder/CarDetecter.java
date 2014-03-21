@@ -3,23 +3,24 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package be.ndusart.carfinder;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
-import com.google.android.gms.common.GooglePlayServicesClient.OnConnectionFailedListener;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
+import java.util.Date;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.widget.Toast;
 
-public class CarDetecter extends BroadcastReceiver implements ConnectionCallbacks, OnConnectionFailedListener {
+public class CarDetecter extends BroadcastReceiver implements LocationListener {
 	
-	private LocationClient mLocation;
+	private static int LOCATION_FRESH_LIMIT = 10000; // only consider location from less than 10 seconds
+	private static int MAX_WAIT_LOCATION_UPDATE = 15000; // accept an update until 15 sec after connection loss
+	private long disconnectTime;
+	private LocationManager locationManager;
 	private Context mContext;
 	
 	@Override
@@ -39,39 +40,68 @@ public class CarDetecter extends BroadcastReceiver implements ConnectionCallback
 	}
 	
 	private void updatePosition(Context context) {
-		int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context);
-		
-		if( resultCode != ConnectionResult.SUCCESS )
-			return;
-		
-		mLocation = new LocationClient(context, this, this);
-		
+		locationManager = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
 		mContext = context;
 		
-		mLocation.connect();
-	}
-
-	@Override
-	public void onConnectionFailed(ConnectionResult result) {
-		mContext = null;
-		mLocation = null;
-	}
-
-	@Override
-	public void onConnected(Bundle connectionHint) {
-		Location location = mLocation.getLastLocation();
+		Location lastNetworkPosition = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+		Location lastGPSPosition = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 		
-		MainActivity.updatePosition((float)location.getLatitude(), (float)location.getLongitude(), mContext);
+		long now = new Date().getTime();
 		
-		mContext = null;
-		mLocation.disconnect();
-		mLocation = null;
+		double latitude=0.0, longitude=0.0;
+		
+		if ( lastGPSPosition != null && (now - lastGPSPosition.getTime()) < LOCATION_FRESH_LIMIT ) {
+			latitude = lastGPSPosition.getLatitude();
+			longitude = lastGPSPosition.getLongitude();
+		} else if ( lastNetworkPosition != null && (now - lastNetworkPosition.getTime()) < LOCATION_FRESH_LIMIT ) {
+			latitude = lastNetworkPosition.getLatitude();
+			longitude = lastNetworkPosition.getLongitude();
+		}
+		
+		if( latitude != 0.0 || longitude != 0.0 ) {
+			MainActivity.updatePosition((float)latitude, (float)longitude, context);
+		} else {
+			disconnectTime = now;
+			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 1.0f, this);
+			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1.0f, this);
+		}
 	}
 
 	@Override
-	public void onDisconnected() {
-		mContext = null;
-		mLocation = null;
+	public void onLocationChanged(Location location) {
+		String provider = location.getProvider();
+		
+		if( (location.getTime() - disconnectTime) > MAX_WAIT_LOCATION_UPDATE )
+		{
+			// update took too long, discard and stop updates
+			locationManager.removeUpdates(this);
+			return;
+		}
+		
+		if( provider == LocationManager.GPS_PROVIDER ) {
+			// always use the new position if from GPS
+			double latitude = location.getLatitude();
+			double longitude = location.getLongitude();
+			MainActivity.updatePosition((float)latitude, (float)longitude, mContext);
+			locationManager.removeUpdates(this); // GPS is enough accurate, stop updates
+			mContext = null;
+		} else if( provider == LocationManager.NETWORK_PROVIDER ) {
+			double latitude = location.getLatitude();
+			double longitude = location.getLongitude();
+			MainActivity.updatePosition((float)latitude, (float)longitude, mContext);
+		}
+	}
+
+	@Override
+	public void onProviderDisabled(String provider) {
+	}
+
+	@Override
+	public void onProviderEnabled(String provider) {
+	}
+
+	@Override
+	public void onStatusChanged(String provider, int status, Bundle extras) {
 	}
 
 }
