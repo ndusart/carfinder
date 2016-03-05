@@ -5,7 +5,7 @@ android {
     buildToolsVersion "23.0.2"
 
     defaultConfig {
-        applicationId "be.ndusart.carfinder"
+        applicationId "be.ndusart.carfinderapp"
         minSdkVersion 12
         targetSdkVersion 22
     }
