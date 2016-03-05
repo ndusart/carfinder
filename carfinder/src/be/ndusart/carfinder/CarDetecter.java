@@ -16,9 +16,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 public class CarDetecter extends BroadcastReceiver implements LocationListener {
-	
-	private static int LOCATION_FRESH_LIMIT = 10000; // only consider location from less than 10 seconds
-	private static int MAX_WAIT_LOCATION_UPDATE = 15000; // accept an update until 15 sec after connection loss
+	private static int MAX_WAIT_LOCATION_UPDATE = 60000; // accept an update until 60 sec after connection loss
 	private long disconnectTime;
 	private LocationManager locationManager;
 	private Context mContext;
@@ -50,31 +48,34 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 		
 		double latitude=0.0, longitude=0.0;
 		
-		if ( lastGPSPosition != null && (now - lastGPSPosition.getTime()) < LOCATION_FRESH_LIMIT ) {
+		if ( lastGPSPosition != null ) {
 			latitude = lastGPSPosition.getLatitude();
 			longitude = lastGPSPosition.getLongitude();
-		} else if ( lastNetworkPosition != null && (now - lastNetworkPosition.getTime()) < LOCATION_FRESH_LIMIT ) {
+		} else if ( lastNetworkPosition != null ) {
 			latitude = lastNetworkPosition.getLatitude();
 			longitude = lastNetworkPosition.getLongitude();
 		}
 		
 		if( latitude != 0.0 || longitude != 0.0 ) {
 			MainActivity.updatePosition((float)latitude, (float)longitude, context);
-		} else {
-			disconnectTime = now;
-			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 1.0f, this);
-			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 1.0f, this);
 		}
+		
+		disconnectTime = now;
+		locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 0.0f, this);
+		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0.0f, this);
 	}
 
 	@Override
 	public void onLocationChanged(Location location) {
+		if( mContext == null ) // location updates were stopped
+			return;
+		
 		String provider = location.getProvider();
 		
 		if( (location.getTime() - disconnectTime) > MAX_WAIT_LOCATION_UPDATE )
 		{
 			// update took too long, discard and stop updates
-			locationManager.removeUpdates(this);
+			stopLocationUpdates();
 			return;
 		}
 		
@@ -83,13 +84,21 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 			double latitude = location.getLatitude();
 			double longitude = location.getLongitude();
 			MainActivity.updatePosition((float)latitude, (float)longitude, mContext);
-			locationManager.removeUpdates(this); // GPS is enough accurate, stop updates
-			mContext = null;
+			stopLocationUpdates(); // GPS is enough accurate, stop updates
 		} else if( provider == LocationManager.NETWORK_PROVIDER ) {
 			double latitude = location.getLatitude();
 			double longitude = location.getLongitude();
 			MainActivity.updatePosition((float)latitude, (float)longitude, mContext);
+			
+			if( ! locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ) {
+				stopLocationUpdates(); // stop now as GPS is off, we won't get any better location
+			}
 		}
+	}
+	
+	private void stopLocationUpdates() {
+		locationManager.removeUpdates(this);
+		mContext = null;
 	}
 
 	@Override
