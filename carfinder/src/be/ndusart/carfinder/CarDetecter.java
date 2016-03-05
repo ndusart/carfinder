@@ -18,6 +18,8 @@ import android.widget.Toast;
 public class CarDetecter extends BroadcastReceiver implements LocationListener {
 	private static int MAX_WAIT_LOCATION_UPDATE = 60000; // accept an update until 60 sec after connection loss
 	private long disconnectTime;
+	private long connectTime;
+	private float lastAccuracy;
 	private LocationManager locationManager;
 	private Context mContext;
 	
@@ -25,15 +27,24 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 	public void onReceive(Context context, Intent intent) {
 		String car = MainActivity.getCarBluetoothAddress(context);
 		
-		if( car==null || car.length()==0 || intent.getAction()!=BluetoothDevice.ACTION_ACL_DISCONNECTED )
+		if( car==null || car.length()==0 )
+			return;
+		
+		if( intent.getAction()!=BluetoothDevice.ACTION_ACL_DISCONNECTED && intent.getAction()!=BluetoothDevice.ACTION_ACL_CONNECTED )
 			return;
 		
 		BluetoothDevice device = (BluetoothDevice)intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 		
 		if( device != null && device.getAddress().equals(car) ) {
-			Toast.makeText(context, "Going out of car, storing location...", Toast.LENGTH_LONG).show();
-			MainActivity.removeLastStreet(context);
-			updatePosition(context);
+			
+			if( intent.getAction() == BluetoothDevice.ACTION_ACL_DISCONNECTED) {
+				Toast.makeText(context, "Going out of car, storing location...", Toast.LENGTH_LONG).show();
+				MainActivity.removeLastStreet(context);
+				updatePosition(context);
+			}
+			else {
+				connectTime = new Date().getTime();
+			}
 		}
 	}
 	
@@ -48,10 +59,10 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 		
 		double latitude=0.0, longitude=0.0;
 		
-		if ( lastGPSPosition != null ) {
+		if ( lastGPSPosition != null && lastGPSPosition.getTime() > connectTime ) {
 			latitude = lastGPSPosition.getLatitude();
 			longitude = lastGPSPosition.getLongitude();
-		} else if ( lastNetworkPosition != null ) {
+		} else if ( lastNetworkPosition != null && lastNetworkPosition.getTime() > connectTime ) {
 			latitude = lastNetworkPosition.getLatitude();
 			longitude = lastNetworkPosition.getLongitude();
 		}
@@ -61,6 +72,7 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 		}
 		
 		disconnectTime = now;
+		lastAccuracy = -1.0f;
 		locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 0.0f, this);
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0.0f, this);
 	}
@@ -79,20 +91,26 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 			return;
 		}
 		
-		if( provider == LocationManager.GPS_PROVIDER ) {
+		float accuracy = location.getAccuracy();
+		
+		if( accuracy >= 0.0f && accuracy < lastAccuracy )
+			return; // discard this update as it is less accurate than the last one
+		
+		if( provider != null && provider.equals(LocationManager.GPS_PROVIDER) ) {
 			// always use the new position if from GPS
 			double latitude = location.getLatitude();
 			double longitude = location.getLongitude();
 			MainActivity.updatePosition((float)latitude, (float)longitude, mContext);
-			stopLocationUpdates(); // GPS is enough accurate, stop updates
-		} else if( provider == LocationManager.NETWORK_PROVIDER ) {
+		} else if( provider != null && provider.equals(LocationManager.NETWORK_PROVIDER) ) {
 			double latitude = location.getLatitude();
 			double longitude = location.getLongitude();
 			MainActivity.updatePosition((float)latitude, (float)longitude, mContext);
-			
-			if( ! locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ) {
-				stopLocationUpdates(); // stop now as GPS is off, we won't get any better location
-			}
+		} else {
+			return;
+		}
+		
+		if( accuracy < 50.0f ) {
+			stopLocationUpdates(); // accurate enough, stop updates
 		}
 	}
 	

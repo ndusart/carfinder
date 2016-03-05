@@ -6,7 +6,7 @@
 
     <uses-sdk
         android:minSdkVersion="12"
-        android:targetSdkVersion="23" />
+        android:targetSdkVersion="22" />
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -38,6 +38,7 @@
         </activity>
         <receiver android:name="CarDetecter">
             <intent-filter>
+                <action android:name="android.bluetooth.device.action.ACL_CONNECTED"/>
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED"/>
             </intent-filter>
         </receiver>
