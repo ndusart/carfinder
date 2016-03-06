@@ -7,12 +7,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import android.app.Dialog;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -34,7 +38,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 
-public class MainActivity extends Activity implements OnClickListener {
+public class MainActivity extends Activity implements OnClickListener, OnMapReadyCallback {
 	
 	private BluetoothAdapter btAdapter;
 	private BluetoothStateReceiver btReceiver;
@@ -42,7 +46,6 @@ public class MainActivity extends Activity implements OnClickListener {
 	private String carBtAddress;
 	private TextView carTextView;
 	private TextView locationTextView;
-	private MapFragment mapFragment;
 	private GoogleMap map;
 	
 	public static final String CAR_PREFERENCES = "be.ndusart.carfinder.MainActivity.CAR_PREFERENCES";
@@ -64,15 +67,6 @@ public class MainActivity extends Activity implements OnClickListener {
 		
 		carTextView = (TextView)findViewById(R.id.carLabel);
 		locationTextView = (TextView)findViewById(R.id.locationLabel);
-		
-		mapFragment = (MapFragment)getFragmentManager().findFragmentById(R.id.map);
-		map = mapFragment.getMap();
-		
-		if( map!=null ) {
-			map.setPadding(10, 10, 10, 10);
-			map.moveCamera(CameraUpdateFactory.zoomTo(16.0f));
-			map.setMyLocationEnabled(true);
-		}
 		
 		btAdapter = BluetoothAdapter.getDefaultAdapter();
 		
@@ -145,6 +139,19 @@ public class MainActivity extends Activity implements OnClickListener {
 			}
 		}
 		
+		btReceiver = new BluetoothStateReceiver();
+		IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+		registerReceiver(btReceiver, filter);
+	}
+
+	@Override
+	public void onMapReady(GoogleMap googleMap) {
+		map = googleMap;
+
+		map.setPadding(10, 10, 10, 10);
+		map.moveCamera(CameraUpdateFactory.zoomTo(16.0f));
+		map.setMyLocationEnabled(true);
+
 		if( hasLocation(this) ) {
 			float latitude = getLastLatitude(this);
 			float longitude = getLastLongitude(this);
@@ -161,22 +168,33 @@ public class MainActivity extends Activity implements OnClickListener {
 			} else {
 				locationTextView.setText("Last location: "+street);
 			}
-			
-			if( map != null ) {
-				map.clear();
-				LatLng carPosition = new LatLng(latitude, longitude);
-				map.addMarker(new MarkerOptions().position(carPosition));
-				map.moveCamera(CameraUpdateFactory.newLatLng(carPosition));
-			}
+
+			map.clear();
+			LatLng carPosition = new LatLng(latitude, longitude);
+			map.addMarker(new MarkerOptions().position(carPosition));
+			map.moveCamera(CameraUpdateFactory.newLatLng(carPosition));
 		} else {
 			locationTextView.setVisibility(View.GONE);
 		}
-		
-		btReceiver = new BluetoothStateReceiver();
-		IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-		registerReceiver(btReceiver, filter);
 	}
-	
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		// Check if Google Play Services is installed
+		GoogleApiAvailability gaa = GoogleApiAvailability.getInstance();
+		int status = gaa.isGooglePlayServicesAvailable(this);
+		if (status != ConnectionResult.SUCCESS) {
+			Dialog dialog = gaa.getErrorDialog(this, status, 1);
+			dialog.show();
+		} else {
+			// show map if Google Play Services is present and up-to-date
+			MapFragment mapFragment = (MapFragment)getFragmentManager().findFragmentById(R.id.map);
+			mapFragment.getMapAsync(this);
+		}
+	}
+
 	@Override
 	protected void onStop() {
 		unregisterReceiver(btReceiver);
@@ -242,7 +260,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle("Choose your car");
-		builder.setItems(btNames.toArray(new String[0]), new DialogClickListener(btAddresses));
+		builder.setItems(btNames.toArray((new String[btNames.size()])), new DialogClickListener(btAddresses));
 		builder.create().show();
 	}
 	

@@ -16,7 +16,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 public class CarDetecter extends BroadcastReceiver implements LocationListener {
-	private static int MAX_WAIT_LOCATION_UPDATE = 60000; // accept an update until 60 sec after connection loss
+	private static final int MAX_WAIT_LOCATION_UPDATE = 60000; // accept an update until 60 sec after connection loss
 	private long disconnectTime;
 	private long connectTime;
 	private float lastAccuracy;
@@ -30,14 +30,14 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 		if( car==null || car.length()==0 )
 			return;
 		
-		if( intent.getAction()!=BluetoothDevice.ACTION_ACL_DISCONNECTED && intent.getAction()!=BluetoothDevice.ACTION_ACL_CONNECTED )
+		if( !intent.getAction().equals(BluetoothDevice.ACTION_ACL_DISCONNECTED) && !intent.getAction().equals(BluetoothDevice.ACTION_ACL_CONNECTED) )
 			return;
 		
-		BluetoothDevice device = (BluetoothDevice)intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+		BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 		
 		if( device != null && device.getAddress().equals(car) ) {
 			
-			if( intent.getAction() == BluetoothDevice.ACTION_ACL_DISCONNECTED) {
+			if( intent.getAction().equals(BluetoothDevice.ACTION_ACL_DISCONNECTED) ) {
 				Toast.makeText(context, "Going out of car, storing location...", Toast.LENGTH_LONG).show();
 				MainActivity.removeLastStreet(context);
 				updatePosition(context);
