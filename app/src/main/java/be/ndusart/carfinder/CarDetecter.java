@@ -5,6 +5,7 @@ package be.ndusart.carfinder;
 
 import java.util.Date;
 
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,6 +14,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.widget.Toast;
 
 public class CarDetecter extends BroadcastReceiver implements LocationListener {
@@ -32,7 +36,8 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 		
 		if( !intent.getAction().equals(BluetoothDevice.ACTION_ACL_DISCONNECTED) && !intent.getAction().equals(BluetoothDevice.ACTION_ACL_CONNECTED) )
 			return;
-		
+
+		locationManager = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
 		BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 		
 		if( device != null && device.getAddress().equals(car) ) {
@@ -43,13 +48,16 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 				updatePosition(context);
 			}
 			else {
+				if( !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) && !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ) {
+					askToEnableLocation(context);
+				}
+
 				connectTime = new Date().getTime();
 			}
 		}
 	}
 	
 	private void updatePosition(Context context) {
-		locationManager = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
 		mContext = context;
 		
 		Location lastNetworkPosition = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -117,6 +125,24 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 	private void stopLocationUpdates() {
 		locationManager.removeUpdates(this);
 		mContext = null;
+	}
+
+	private void askToEnableLocation(Context context) {
+		String message = "You should enable location (in any mode you like most).\nOtherwise Car Finder will not be able to detect your car new position.";
+
+		Intent locationIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+		PendingIntent pendingLocationIntent = PendingIntent.getActivity(context, 1, locationIntent, 0);
+
+		NotificationCompat.Builder notifBuilder = new NotificationCompat.Builder(context)
+				.setSmallIcon(R.drawable.ic_notification)
+				.setContentTitle("Please enable location")
+				.setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+				.setContentText(message)
+				.setContentIntent(pendingLocationIntent)
+				.setAutoCancel(true);
+
+		NotificationManagerCompat mNotifyMgr = NotificationManagerCompat.from(context);
+		mNotifyMgr.notify(1, notifBuilder.build());
 	}
 
 	@Override
