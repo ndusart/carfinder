@@ -20,7 +20,7 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.widget.Toast;
 
 public class CarDetecter extends BroadcastReceiver implements LocationListener {
-	private static final int MAX_WAIT_LOCATION_UPDATE = 60000; // accept an update until 60 sec after connection loss
+	private static final int MAX_WAIT_LOCATION_UPDATE = 45000; // accept an update until 45 sec after connection loss
 	private long disconnectTime;
 	private long connectTime;
 	private float lastAccuracy;
@@ -117,7 +117,7 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 			return;
 		}
 		
-		if( accuracy < 50.0f ) {
+		if( accuracy < 30.0f ) {
 			stopLocationUpdates(); // accurate enough, stop updates
 		}
 	}
