@@ -13,10 +13,12 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.app.Dialog;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -52,6 +54,7 @@ public class MainActivity extends Activity implements OnClickListener, OnMapRead
 	public static final String CAR_BT_ADDRESS_KEY = "carBtAddressKey";
 	public static final String CAR_LAST_LATITUDE_KEY = "carBtLatitudeKey";
 	public static final String CAR_LAST_LONGITUDE_KEY = "carBtLongitudeKey";
+	public static final String CAR_LAST_ACCURACY_KEY = "carBtAccuracyKey";
 	public static final String CAR_LAST_POSITION_STREET_KEY = "carBtStreetKey";
 	private static final int REQUEST_ENABLE_BT = 3;
 	
@@ -92,6 +95,11 @@ public class MainActivity extends Activity implements OnClickListener, OnMapRead
 		SharedPreferences preferences = context.getSharedPreferences(CAR_PREFERENCES, MODE_PRIVATE);
 		return preferences.getFloat(CAR_LAST_LONGITUDE_KEY, 0.0f);
 	}
+
+	public static float getLastAccuracy(Context context) {
+		SharedPreferences preferences = context.getSharedPreferences(CAR_PREFERENCES, MODE_PRIVATE);
+		return preferences.getFloat(CAR_LAST_ACCURACY_KEY, -1.0f);
+	}
 	
 	public static boolean hasLocation(Context context) {
 		SharedPreferences preferences = context.getSharedPreferences(CAR_PREFERENCES, MODE_PRIVATE);
@@ -107,20 +115,21 @@ public class MainActivity extends Activity implements OnClickListener, OnMapRead
 	public static void updateLastStreet(String street, Context context) {
 		SharedPreferences.Editor edit = context.getSharedPreferences(CAR_PREFERENCES, MODE_PRIVATE).edit();
 		edit.putString(CAR_LAST_POSITION_STREET_KEY, street);
-		edit.commit();
+		edit.apply();
 	}
 	
 	public static void removeLastStreet(Context context) {
 		SharedPreferences.Editor edit = context.getSharedPreferences(CAR_PREFERENCES, MODE_PRIVATE).edit();
 		edit.remove(CAR_LAST_POSITION_STREET_KEY);
-		edit.commit();
+		edit.apply();
 	}
 	
-	public static void updatePosition(float latitude, float longitude, Context context) {
+	public static void updatePosition(float latitude, float longitude, float accuracy, Context context) {
 		SharedPreferences.Editor edit = context.getSharedPreferences(CAR_PREFERENCES, MODE_PRIVATE).edit();
 		edit.putFloat(CAR_LAST_LATITUDE_KEY, latitude);
 		edit.putFloat(CAR_LAST_LONGITUDE_KEY, longitude);
-		edit.commit();
+		edit.putFloat(CAR_LAST_ACCURACY_KEY, accuracy);
+		edit.apply();
 	}
 	
 	@Override
@@ -155,7 +164,9 @@ public class MainActivity extends Activity implements OnClickListener, OnMapRead
 		if( hasLocation(this) ) {
 			float latitude = getLastLatitude(this);
 			float longitude = getLastLongitude(this);
+			float accuracy = getLastAccuracy(this);
 			String street = getLastStreet(this);
+
 			locationTextView.setText("Last location: ("+latitude+","+longitude+")");
 			locationTextView.setVisibility(View.VISIBLE);
 			if( street==null || street.length()==0 ) {
@@ -171,7 +182,18 @@ public class MainActivity extends Activity implements OnClickListener, OnMapRead
 
 			map.clear();
 			LatLng carPosition = new LatLng(latitude, longitude);
+
 			map.addMarker(new MarkerOptions().position(carPosition));
+
+			if( accuracy >= 0.0f ) {
+				map.addCircle(new CircleOptions()
+						.center(carPosition)
+						.radius(accuracy)
+						.strokeColor(Color.argb(220, 255, 50, 50))
+						.strokeWidth(1.0f)
+						.fillColor(Color.argb(80, 255, 50, 50)));
+			}
+
 			map.moveCamera(CameraUpdateFactory.newLatLng(carPosition));
 		} else {
 			locationTextView.setVisibility(View.GONE);
@@ -299,7 +321,7 @@ public class MainActivity extends Activity implements OnClickListener, OnMapRead
 			SharedPreferences preferences = getSharedPreferences(CAR_PREFERENCES, MODE_PRIVATE);
 			SharedPreferences.Editor editor = preferences.edit();
 			editor.putString(CAR_BT_ADDRESS_KEY, carBtAddress);
-			editor.commit();
+			editor.apply();
 			
 			problemButton.setVisibility(View.GONE);
 			

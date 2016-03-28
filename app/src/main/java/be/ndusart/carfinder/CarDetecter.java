@@ -62,21 +62,18 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 		
 		Location lastNetworkPosition = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 		Location lastGPSPosition = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		Location lastPosition = null;
 		
 		long now = new Date().getTime();
 		
-		double latitude=0.0, longitude=0.0;
-		
 		if ( lastGPSPosition != null && lastGPSPosition.getTime() > connectTime ) {
-			latitude = lastGPSPosition.getLatitude();
-			longitude = lastGPSPosition.getLongitude();
+			lastPosition = lastGPSPosition;
 		} else if ( lastNetworkPosition != null && lastNetworkPosition.getTime() > connectTime ) {
-			latitude = lastNetworkPosition.getLatitude();
-			longitude = lastNetworkPosition.getLongitude();
+			lastPosition = lastNetworkPosition;
 		}
 		
-		if( latitude != 0.0 || longitude != 0.0 ) {
-			MainActivity.updatePosition((float)latitude, (float)longitude, context);
+		if( lastPosition != null ) {
+			MainActivity.updatePosition((float)lastPosition.getLatitude(), (float)lastPosition.getLatitude(), lastPosition.getAccuracy(), context);
 		}
 		
 		disconnectTime = now;
@@ -108,11 +105,11 @@ public class CarDetecter extends BroadcastReceiver implements LocationListener {
 			// always use the new position if from GPS
 			double latitude = location.getLatitude();
 			double longitude = location.getLongitude();
-			MainActivity.updatePosition((float)latitude, (float)longitude, mContext);
+			MainActivity.updatePosition((float)latitude, (float)longitude, accuracy, mContext);
 		} else if( provider != null && provider.equals(LocationManager.NETWORK_PROVIDER) ) {
 			double latitude = location.getLatitude();
 			double longitude = location.getLongitude();
-			MainActivity.updatePosition((float)latitude, (float)longitude, mContext);
+			MainActivity.updatePosition((float)latitude, (float)longitude, accuracy, mContext);
 		} else {
 			return;
 		}
