@@ -4,18 +4,10 @@
     android:versionCode="3"
     android:versionName="1.2" >
 
-    <uses-sdk
-        android:minSdkVersion="12"
-        android:targetSdkVersion="22" />
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    
-    <uses-feature android:glEsVersion="0x00020000" android:required="true"/>
 
     <application
         android:allowBackup="true"
@@ -26,7 +18,7 @@
            android:value="@integer/google_play_services_version" />
 		<meta-data
 			android:name="com.google.android.maps.v2.API_KEY"
-			android:value="AIzaSyD0FjJdPUfZeBCJWEvZ6OoOh49vMn2mwMw"/>
+			android:value="AIzaSyD5sg6Gd1M_iaeg1NGa73OgTqfF_s3i6x0"/>
         <activity
             android:name="be.ndusart.carfinder.MainActivity"
             android:label="@string/app_name" >
