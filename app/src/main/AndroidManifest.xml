@@ -14,26 +14,45 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+
         <meta-data android:name="com.google.android.gms.version"
            android:value="@integer/google_play_services_version" />
+
 		<meta-data
 			android:name="com.google.android.maps.v2.API_KEY"
 			android:value="AIzaSyD5sg6Gd1M_iaeg1NGa73OgTqfF_s3i6x0"/>
+
         <activity
             android:name="be.ndusart.carfinder.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="be.ndusart.carfinder.settings.SettingsActivity"
+            android:label="@string/settings_activity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <receiver android:name="be.ndusart.carfinder.CarDetecter">
             <intent-filter>
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED"/>
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED"/>
             </intent-filter>
         </receiver>
+
+        <provider
+            android:authorities="be.ndusart.carfinderapp.carprovider"
+            android:name="be.ndusart.carfinder.provider.CarContentProvider"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
 
 </manifest>

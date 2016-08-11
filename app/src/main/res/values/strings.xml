@@ -4,5 +4,8 @@
     <string name="app_name">Car Finder</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
+    <string name="settings_activity">Settings</string>
+    <string name="add_car">Add a new car</string>
+    <string name="no_car_warning">No car has been configured yet. Please tap the button to add a car and start tracking it.</string>
 
 </resources>
