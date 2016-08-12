@@ -40,6 +40,12 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="be.ndusart.carfinder.settings.NewCarActivity"
+            android:label="@string/add_car"
+            android:theme="@style/Theme.AppCompat.Light.Dialog"
+            android:exported="false"/>
+
         <receiver android:name="be.ndusart.carfinder.CarDetecter">
             <intent-filter>
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED"/>

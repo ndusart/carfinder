@@ -7,5 +7,14 @@
     <string name="settings_activity">Settings</string>
     <string name="add_car">Add a new car</string>
     <string name="no_car_warning">No car has been configured yet. Please tap the button to add a car and start tracking it.</string>
+    <string name="bluetooth_disabled">You have to enable bluetooth to be able to see the list of paired devices and to choose your car.</string>
+    <string name="enable_bluetooth">Enable Bluetooth</string>
+    <string name="no_paired_device">No paired device could be found. Please make sure you paired your phone with your car and that you did not already configure the car you\'re looking for.</string>
+    <string name="select_device">Select device</string>
+    <string name="select_device_instructions">Please select the bluetooth device corresponding to your car</string>
+    <string name="name_label">Name :</string>
+    <string name="configure_car_instructions">You can modify these settings regarding your new car</string>
+    <string name="update_bt_name">Change the system name given for this device as well</string>
+    <string name="configure_car">Configure car</string>
 
 </resources>

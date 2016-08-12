@@ -1,7 +1,7 @@
 package be.ndusart.carfinder.settings;
 
+import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -86,11 +86,8 @@ public class SettingsActivity extends AppCompatActivity implements LoaderManager
     @Override
     public void onClick(View view) {
         if( view == addCarButton ) {
-            Car car = new Car("Car", "BT", Color.BLUE, 50.03, 4.23);
-            try {
-                car.save(this);
-            } catch (Exception e) {
-            }
+            Intent intent = new Intent(this, NewCarActivity.class);
+            startActivity(intent);
         }
     }
 }

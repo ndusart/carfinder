@@ -9,6 +9,8 @@ import android.net.Uri;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.ArrayList;
+
 import be.ndusart.carfinder.provider.CarContentProvider;
 
 public class Car {
@@ -44,6 +46,70 @@ public class Car {
         refresh(context);
     }
 
+    public Car(Cursor cursor, int id_index, int name_index, int mac_address_index, int color_index, int latitude_index, int longitude_index) {
+        this();
+
+        if( id_index < 0 )
+            id_index = cursor.getColumnIndex(DatabaseOpenHelper.CARS_ID_COLUMN);
+
+        if( name_index < 0 )
+            name_index = cursor.getColumnIndex(DatabaseOpenHelper.CARS_NAME_COLUMN);
+
+        if( mac_address_index < 0 )
+            mac_address_index = cursor.getColumnIndex(DatabaseOpenHelper.CARS_BT_MAC_COLUMN);
+
+        if( color_index < 0 )
+            color_index = cursor.getColumnIndex(DatabaseOpenHelper.CARS_COLOR_COLUMN);
+
+        if( latitude_index < 0 )
+            latitude_index = cursor.getColumnIndex(DatabaseOpenHelper.CARS_LATITUDE_COLUMN);
+
+        if( longitude_index < 0 )
+            longitude_index = cursor.getColumnIndex(DatabaseOpenHelper.CARS_LONGITUDE_COLUMN);
+
+        id = cursor.getLong(id_index);
+        name = cursor.getString(name_index);
+        macAddress = cursor.getString(mac_address_index);
+        color = cursor.getInt(color_index);
+        coordinates = new LatLng(cursor.getDouble(latitude_index), cursor.getDouble(longitude_index));
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
+    }
+
+    public int getColor() {
+        return color;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
+    }
+
+    public LatLng getCoordinates() {
+        return coordinates;
+    }
+
+    public void setCoordinates(LatLng coordinates) {
+        this.coordinates = coordinates;
+    }
+
     public void save(Context context) throws Exception {
         ContentResolver resolver = context.getContentResolver();
 
@@ -51,8 +117,13 @@ public class Car {
         values.put(DatabaseOpenHelper.CARS_BT_MAC_COLUMN, macAddress);
         values.put(DatabaseOpenHelper.CARS_NAME_COLUMN, name);
         values.put(DatabaseOpenHelper.CARS_COLOR_COLUMN, color);
-        values.put(DatabaseOpenHelper.CARS_LATITUDE_COLUMN, coordinates.latitude);
-        values.put(DatabaseOpenHelper.CARS_LONGITUDE_COLUMN, coordinates.longitude);
+        if( coordinates != null ) {
+            values.put(DatabaseOpenHelper.CARS_LATITUDE_COLUMN, coordinates.latitude);
+            values.put(DatabaseOpenHelper.CARS_LONGITUDE_COLUMN, coordinates.longitude);
+        } else {
+            values.put(DatabaseOpenHelper.CARS_LATITUDE_COLUMN, (String)null);
+            values.put(DatabaseOpenHelper.CARS_LONGITUDE_COLUMN, (String)null);
+        }
 
         if( id < 0 ) {
             // new entity
@@ -143,5 +214,42 @@ public class Car {
         } finally {
             cursor.close();
         }
+    }
+
+    public static ArrayList<Car> getAllCars(Context context) {
+        ArrayList<Car> cars = new ArrayList<>();
+
+        ContentResolver resolver = context.getContentResolver();
+
+        String[] projection = new String[]{
+                DatabaseOpenHelper.CARS_ID_COLUMN,
+                DatabaseOpenHelper.CARS_NAME_COLUMN,
+                DatabaseOpenHelper.CARS_BT_MAC_COLUMN,
+                DatabaseOpenHelper.CARS_COLOR_COLUMN,
+                DatabaseOpenHelper.CARS_LATITUDE_COLUMN,
+                DatabaseOpenHelper.CARS_LONGITUDE_COLUMN
+        };
+
+        int id_index = 0;
+        int name_index = 1;
+        int address_index = 2;
+        int color_index = 3;
+        int latitude_index = 4;
+        int longitude_index = 5;
+
+        Cursor cursor = resolver.query(CarContentProvider.carsUri(), projection, null, null, null);
+
+        if( cursor == null )
+            return cars;
+
+        try {
+            while( cursor.moveToNext() ) {
+                cars.add(new Car(cursor, id_index, name_index, address_index, color_index, latitude_index, longitude_index));
+            }
+        } finally {
+            cursor.close();
+        }
+
+        return cars;
     }
 }
