@@ -16,5 +16,6 @@
     <string name="configure_car_instructions">You can modify these settings regarding your new car</string>
     <string name="update_bt_name">Change the system name given for this device as well</string>
     <string name="configure_car">Configure car</string>
+    <string name="color_label">Color :</string>
 
 </resources>

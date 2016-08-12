@@ -35,11 +35,15 @@ public class NewCarActivity extends AppCompatActivity implements View.OnClickLis
     private RelativeLayout configureCarLayout;
     private EditText carNameEdit;
     private Button configureCarButton;
+    private Spinner colorSpinner;
 
     private BluetoothAdapter btAdapter;
 
     private ArrayAdapter<String> devicesAdapter;
     private ArrayList<String> pairedAddresses;
+
+    private ArrayAdapter<String> colorsAdapter;
+    private ArrayList<Integer> colorCodes;
 
     private Car newCar;
 
@@ -66,6 +70,7 @@ public class NewCarActivity extends AppCompatActivity implements View.OnClickLis
 
         pairedAddresses = new ArrayList<>();
         devicesAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
+        devicesAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         if( selectCarSpinner != null ) {
             selectCarSpinner.setAdapter(devicesAdapter);
         }
@@ -82,6 +87,16 @@ public class NewCarActivity extends AppCompatActivity implements View.OnClickLis
 
         if( configureCarButton != null )
             configureCarButton.setOnClickListener(this);
+
+        colorsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"Blue", "Black", "Red"});
+        colorsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        colorCodes = new ArrayList<>();
+        colorCodes.add(Color.BLUE);
+        colorCodes.add(Color.BLACK);
+        colorCodes.add(Color.RED);
+        colorSpinner = (Spinner) findViewById(R.id.color_spinner);
+        if( colorSpinner != null )
+            colorSpinner.setAdapter(colorsAdapter);
 
         btAdapter = BluetoothAdapter.getDefaultAdapter();
     }
@@ -144,6 +159,8 @@ public class NewCarActivity extends AppCompatActivity implements View.OnClickLis
             configureCarLayout.setVisibility(View.VISIBLE);
         } else if( view == configureCarButton ) {
             try {
+                newCar.setName(carNameEdit.getText().toString());
+                newCar.setColor(colorCodes.get(colorSpinner.getSelectedItemPosition()));
                 newCar.save(this);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -177,6 +194,12 @@ public class NewCarActivity extends AppCompatActivity implements View.OnClickLis
 
         ArrayList<Car> cars = Car.getAllCars(this);
         Set<BluetoothDevice> paired = btAdapter.getBondedDevices();
+
+        if( paired.size() == 0 )
+            return false;
+
+        if( cars.size() == 0 )
+            return true;
 
         for ( Car car : cars ) {
             String address = car.getMacAddress();
