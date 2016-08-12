@@ -10,18 +10,19 @@ import be.ndusart.carfinder.model.Car;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private TextView noCarWarningLabel;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        noCarWarningLabel = (TextView) findViewById(R.id.no_car_warning_label);
+        TextView noCarWarningLabel = (TextView) findViewById(R.id.no_car_warning_label);
 
-        if( Car.hasAnyCar(this) )
-            noCarWarningLabel.setVisibility(View.GONE);
-        else
-            noCarWarningLabel.setVisibility(View.VISIBLE);
+        if( noCarWarningLabel != null ) {
+            if (Car.numberOfCars(this) > 0)
+                noCarWarningLabel.setVisibility(View.GONE);
+            else {
+                noCarWarningLabel.setVisibility(View.VISIBLE);
+            }
+        }
     }
 }
