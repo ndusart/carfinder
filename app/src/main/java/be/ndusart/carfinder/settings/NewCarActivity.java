@@ -88,12 +88,14 @@ public class NewCarActivity extends AppCompatActivity implements View.OnClickLis
         if( configureCarButton != null )
             configureCarButton.setOnClickListener(this);
 
-        colorsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"Blue", "Black", "Red"});
+        colorsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"Blue", "Black", "Red", "Green", "Yellow"});
         colorsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         colorCodes = new ArrayList<>();
         colorCodes.add(Color.BLUE);
         colorCodes.add(Color.BLACK);
         colorCodes.add(Color.RED);
+        colorCodes.add(Color.GREEN);
+        colorCodes.add(Color.YELLOW);
         colorSpinner = (Spinner) findViewById(R.id.color_spinner);
         if( colorSpinner != null )
             colorSpinner.setAdapter(colorsAdapter);
